@@ -1,3 +1,6 @@
+// ==========================================
+// EMPLOYEE ROSTER MANAGEMENT TYPES
+// ==========================================
 export interface EmployeeFormFields {
   firstName: string;
   lastName: string;
@@ -25,4 +28,20 @@ export interface PaginatedResponse {
   success: boolean;
   data: EmployeeRecord[];
   pagination: PaginationMetadata;
+}
+
+// ==========================================
+// COMPENSATION ANALYTICS ENGINE TYPES
+// ==========================================
+export interface SalaryMetrics {
+  min: number;
+  avg: number;
+  max: number;
+}
+
+export interface FilterState {
+  country: string[];
+  jobTitle: string[];
+  department: string[];
+  employmentStatus: string[];
 }

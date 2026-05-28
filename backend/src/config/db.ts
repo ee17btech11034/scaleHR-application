@@ -11,24 +11,29 @@ const dbPath = path.join(__dirname, '../../salary_management.db');
 export const db = new Database(dbPath, { verbose: console.log });
 
 export function initializeDatabaseSchema(): void {
-  const schema = `
-    CREATE TABLE IF NOT EXISTS employees (
-      id TEXT PRIMARY KEY,
-      first_name TEXT NOT NULL,
-      last_name TEXT NOT NULL,
-      age INTEGER NOT NULL,
-      job_title TEXT NOT NULL,
-      department TEXT NOT NULL,
-      country TEXT NOT NULL,
-      salary INTEGER NOT NULL,
-      employment_status TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
+      const schema = `
+      CREATE TABLE IF NOT EXISTS employees (
+        id TEXT PRIMARY KEY,
+        first_name TEXT NOT NULL,
+        last_name TEXT NOT NULL,
+        age INTEGER NOT NULL,
+        job_title TEXT NOT NULL,
+        department TEXT NOT NULL,
+        country TEXT NOT NULL,
+        salary INTEGER NOT NULL,
+        employment_status TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
 
-    -- Indexes optimized for rapid server-side pagination performance bounds
-    CREATE INDEX IF NOT EXISTS idx_emp_pagination ON employees (created_at DESC);
-    CREATE INDEX IF NOT EXISTS idx_emp_search ON employees (first_name, last_name, job_title);
-  `;
+      -- Fast sequential indexes for server paging checks
+      CREATE INDEX IF NOT EXISTS idx_emp_pagination ON employees (created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_emp_search ON employees (first_name, last_name, job_title);
+
+      -- ⚡ EXTRA HIGH PERFORMANCE ANALYTICS SEARCH INDEX
+      CREATE INDEX IF NOT EXISTS idx_emp_multi_filters 
+      ON employees (country, department, job_title, employment_status);
+    `;
+
   
   db.exec(schema);
   console.log('📦 Relational SQLite schema layers securely locked and verified.');
