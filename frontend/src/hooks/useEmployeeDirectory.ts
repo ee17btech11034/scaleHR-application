@@ -1,8 +1,10 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import type { EmployeeRecord, EmployeeFormFields } from '../types/employee';
 import { operational_country_details } from '../data/countries';
 import { employmentStatusTypes, departmentTypes, jobTitletypes } from '../data/employementConstants';
+import { mockEmployees } from '../data/mockEmployees';
 
+const ITEMS_PER_PAGE = 15;
 // Factory helper to safely initialize blank states with correct literal types
 const getInitialFormState = (): EmployeeFormFields => ({
   firstName: '',
@@ -18,14 +20,20 @@ const getInitialFormState = (): EmployeeFormFields => ({
 
 export function useEmployeeDirectory() {
   // Hard state workforce memory layout
-  const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
+  const [employees, setEmployees] = useState<EmployeeRecord[]>(() => mockEmployees);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   // UI modal view state controllers
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeRecord | null>(null);
   const [editingEmployee, setEditingEmployee] = useState<EmployeeRecord | null>(null);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [formData, setFormData] = useState<EmployeeFormFields>(getInitialFormState());
+
+    // Reset page window to 1 whenever an HR manager modifies search inputs
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   // High-performance search index pipeline (Runs instantly for 10,000 records)
   const filteredEmployees = useMemo(() => {
@@ -53,6 +61,16 @@ export function useEmployeeDirectory() {
       }
     );
   }, [employees, searchQuery]);
+
+  // 2. Pagination Calculator (Slices the 10,000 matches down to just 12 rows)
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredEmployees.length / ITEMS_PER_PAGE) || 1;
+  }, [filteredEmployees]);
+
+  const paginatedEmployees = useMemo(() => {
+    const startOffset = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredEmployees.slice(startOffset, startOffset + ITEMS_PER_PAGE);
+  }, [filteredEmployees, currentPage]);
 
   // Open modal for a brand new employee
   const openAddModal = useCallback(() => {
@@ -120,6 +138,10 @@ export function useEmployeeDirectory() {
     openUpdateModal,
     deleteEmployee,
     submitForm,
+    paginatedEmployees,
+    currentPage,
+    setCurrentPage,
+    totalPages,
     setEmployees // Useful if loading initial 10,000 employees from an external seed file
   };
 }
