@@ -1,10 +1,10 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, } from 'react';
 import type { EmployeeRecord, EmployeeFormFields } from '../types/employee';
 import { operational_country_details } from '../data/countries';
 import { employmentStatusTypes, departmentTypes, jobTitletypes } from '../data/employementConstants';
 import { mockEmployees } from '../data/mockEmployees';
 
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = 12;
 // Factory helper to safely initialize blank states with correct literal types
 const getInitialFormState = (): EmployeeFormFields => ({
   firstName: '',
@@ -31,9 +31,10 @@ export function useEmployeeDirectory() {
   const [formData, setFormData] = useState<EmployeeFormFields>(getInitialFormState());
 
     // Reset page window to 1 whenever an HR manager modifies search inputs
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery]);
+  const handleSearchChange = useCallback((newValue: string) => {
+    setSearchQuery(newValue);
+    setCurrentPage(1); // Safely batched update with no cascading effects
+  }, []);
 
   // High-performance search index pipeline (Runs instantly for 10,000 records)
   const filteredEmployees = useMemo(() => {
@@ -125,7 +126,7 @@ export function useEmployeeDirectory() {
 
   return {
     searchQuery,
-    setSearchQuery,
+    setSearchQuery: handleSearchChange,
     filteredEmployees,
     selectedEmployee,
     setSelectedEmployee,

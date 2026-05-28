@@ -1,6 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 // import { Home, Employees, Analytics } from './components';
-import { Home, Employees } from './components';
+import { Home, Employees, Analytics } from './components';
 import  RootLayout  from './layouts/RootLayout';
 
 export const router = createBrowserRouter([
@@ -16,10 +16,10 @@ export const router = createBrowserRouter([
         path: "employees", // path ==>  /employees   as "/" is coming from parent
         element: <Employees />,
       },
-      // {
-      //   path: "analytics",
-      //   element: <Analytics />,
-      // },
+      {
+        path: "analytics",
+        element: <Analytics />,
+      },
     ],
   },
 ]);
