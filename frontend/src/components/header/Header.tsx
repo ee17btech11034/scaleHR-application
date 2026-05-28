@@ -1,7 +1,10 @@
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useEmployeeDirectory } from '../../hooks/useEmployeeDirectory'; // New: Pull backend fetch hook
 
 export default function Header() {
   const location = useLocation();
+  const { prefetchFirstChunk } = useEmployeeDirectory(); // New: Destructure the prefetch cache engine
 
   // Highlight navigation links based on the current active URL path
   const isActive = (path: string) => {
@@ -9,10 +12,10 @@ export default function Header() {
     return location.pathname.startsWith(path);
   };
 
-  const links: { id: string; label: string }[] = [
-    { id: '/', label: 'Home' },
-    { id: '/employees', label: 'Employees' },
-    { id: '/analytics', label: 'Analytics' },
+  const links: { id: string; label: string; idName: string }[] = [
+    { id: '/', label: 'Home', idName: 'home' },
+    { id: '/employees', label: 'Employees', idName: 'employees' }, // Target idName reference matching criteria
+    { id: '/analytics', label: 'Analytics', idName: 'analytics' },
   ];
 
   const navLinkClass = (path: string) =>
@@ -35,10 +38,17 @@ export default function Header() {
         
         {/* Navigation Menu */}
         <nav className="flex space-x-8 text-sm font-medium">
-            {links.map((link)=>(<Link to={link.id} key={link.id} className={navLinkClass(link.id)}>
+          {links.map((link) => (
+            <Link 
+              to={link.id} 
+              key={link.id} 
+              className={navLinkClass(link.id)}
+              // ⚡ Injects the high-performance on-demand hover trigger exclusively for the employees route
+              onMouseEnter={link.idName === 'employees' ? prefetchFirstChunk : undefined}
+            >
                {link.label}
-            </Link>))
-            }
+            </Link>
+          ))}
         </nav>
 
       </div>

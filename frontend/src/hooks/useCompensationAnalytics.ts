@@ -1,5 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
-import { mockEmployees } from '../data/mockEmployees';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { operational_country_details } from '../data/countries';
 import { employmentStatusTypes, departmentTypes, jobTitletypes } from '../data/employementConstants';
 import type { FilterState, SalaryMetrics } from '../types/analyticsTypes';
@@ -11,52 +10,91 @@ export interface FilterOptions {
   employmentStatuses: { id: string; label: string }[];
 }
 
+const API_BASE_URL = 'http://localhost:5000';
+
 export function useCompensationAnalytics() {
-  // 1. Initialize strictly typed state arrays matching your FilterState contract
   const [filters, setFilters] = useState<FilterState>({
-    country: [operational_country_details[0]?.code || 'US'] as FilterState['country'],
-    jobTitle: [jobTitletypes[0] || 'Software Engineer'] as FilterState['jobTitle'],
-    department: [departmentTypes[0] || 'Engineering'] as FilterState['department'],
-    employmentStatus: [employmentStatusTypes[0]?.id || 'FT'] as FilterState['employmentStatus'],
+    country: operational_country_details.map(c => c.code) as FilterState['country'],
+    jobTitle: [...jobTitletypes] as FilterState['jobTitle'],
+    department: [...departmentTypes] as FilterState['department'],
+    employmentStatus: employmentStatusTypes.map(s => s.id) as FilterState['employmentStatus'],
   });
 
-  // 2. Build unique dynamic option arrays to feed into dropdown selectors
+  const [computedMetrics, setComputedMetrics] = useState<SalaryMetrics>({ min: 0, max: 0, avg: 0 });
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
   const filterOptions = useMemo<FilterOptions>(() => {
-    const titlesSet = new Set<string>();
-    const deptsSet = new Set<string>();
-
-    for (let i = 0; i < mockEmployees.length; i++) {
-      const emp = mockEmployees[i];
-      if (emp.jobTitle) titlesSet.add(emp.jobTitle);
-      if (emp.department) deptsSet.add(emp.department);
-    }
-
     return {
       countries: operational_country_details.map((c) => ({
         code: c.code,
         label: `${c.name} (${c.code})`,
       })),
-      jobTitles: Array.from(titlesSet).sort(),
-      departments: Array.from(deptsSet).sort(),
+      jobTitles: [...jobTitletypes].sort(),
+      departments: [...departmentTypes].sort(),
       employmentStatuses: employmentStatusTypes.map((s) => ({
         id: s.id,
-        label: s.name, // maps name straight to layout component keys
+        label: s.name,
       })),
     };
   }, []);
 
-  // 3. Strict Generic Single-Item Toggler (Adds or removes individual check items)
-  const updateFilter = useCallback(<K extends keyof FilterState>(
-    key: K, 
-    value: string
-  ) => {
+  useEffect(() => {
+    const controller = new AbortController();
+
+    setTimeout(async () => {
+      if (controller.signal.aborted) return;
+      setIsLoading(true);
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/analytics`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            countries: filters.country,
+            jobTitles: filters.jobTitle,
+            departments: filters.department,
+            employmentStatuses: filters.employmentStatus,
+          }),
+          signal: controller.signal
+        });
+
+        if (!response.ok) throw new Error('Database metrics aggregation fault response received.');
+        
+        const data = await response.json();
+        
+        if (controller.signal.aborted) return;
+
+        if (data && typeof data === 'object') {
+          setComputedMetrics({
+            min: (data.min as number) || 0,
+            max: (data.max as number) || 0,
+            avg: (data.avg as number) || 0
+          });
+        }
+      } catch (error: unknown) {
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error('Failed to compute server-side workforce matrix analytics:', error);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
+      }
+    }, 0);
+
+    return () => {
+      controller.abort();
+    };
+  }, [filters]);
+
+  const updateFilter = useCallback(<K extends keyof FilterState>(key: K, value: string) => {
     setFilters((prev) => {
       const currentValues = prev[key] as unknown as string[];
       const isSelected = currentValues.includes(value);
       
       let updatedValues: string[];
       if (isSelected) {
-        if (currentValues.length === 1) return prev; // Retain at least one query item to prevent divide-by-zero errors
+        if (currentValues.length === 1) return prev;
         updatedValues = currentValues.filter((val) => val !== value);
       } else {
         updatedValues = [...currentValues, value];
@@ -66,25 +104,19 @@ export function useCompensationAnalytics() {
     });
   }, []);
 
-  // ⚡ 4. The Missing Bulk Selector Method (Select All / Reset All)
-  const toggleAllFilter = useCallback(<K extends keyof FilterState>(
-    key: K,
-    action: 'select' | 'deselect'
-  ) => {
+  const toggleAllFilter = useCallback(<K extends keyof FilterState>(key: K, action: 'select' | 'deselect') => {
     setFilters((prev) => {
       let updatedValues: string[];
 
       if (action === 'select') {
-        // Hydrate the whole array with all possible options available from our configuration indices
         if (key === 'country') updatedValues = filterOptions.countries.map(c => c.code);
         else if (key === 'jobTitle') updatedValues = filterOptions.jobTitles;
         else if (key === 'department') updatedValues = filterOptions.departments;
         else updatedValues = filterOptions.employmentStatuses.map(s => s.id);
       } else {
-        // Graceful reset fallback constraint: leave only the absolute first string item checked
         if (key === 'country') updatedValues = [filterOptions.countries[0]?.code || 'US'];
-        else if (key === 'jobTitle') updatedValues = [filterOptions.jobTitles[0] || 'Software Engineer'];
-        else if (key === 'department') updatedValues = [filterOptions.departments[0] || 'Engineering'];
+        else if (key === 'jobTitle') updatedValues = [filterOptions.jobTitles[0] || 'Data Analyst'];
+        else if (key === 'department') updatedValues = [filterOptions.departments[0] || 'Design'];
         else updatedValues = [filterOptions.employmentStatuses[0]?.id || 'FT'];
       }
 
@@ -92,51 +124,12 @@ export function useCompensationAnalytics() {
     });
   }, [filterOptions]);
 
-  // 5. High-Performance Math Traversal Loop ($O(N)$ execution bounds via O(1) Set contains lookups)
-  const computedMetrics = useMemo<SalaryMetrics>(() => {
-    let min = Infinity;
-    let max = -Infinity;
-    let sum = 0;
-    let matchedCount = 0;
-
-    const countrySet = new Set<string>(filters.country as unknown as string[]);
-    const titleSet = new Set<string>(filters.jobTitle as unknown as string[]);
-    const deptSet = new Set<string>(filters.department as unknown as string[]);
-    const statusSet = new Set<string>(filters.employmentStatus as unknown as string[]);
-
-    for (let i = 0; i < mockEmployees.length; i++) {
-      const emp = mockEmployees[i];
-
-      const matchesCountry = countrySet.has(emp.country);
-      const matchesTitle = titleSet.has(emp.jobTitle);
-      const matchesDept = deptSet.has(emp.department);
-      const matchesStatus = statusSet.has(emp.employmentStatus);
-
-      if (matchesCountry && matchesTitle && matchesDept && matchesStatus) {
-        const sal = emp.salary;
-        if (sal < min) min = sal;
-        if (sal > max) max = sal;
-        sum += sal;
-        matchedCount++;
-      }
-    }
-
-    if (matchedCount === 0) {
-      return { min: 0, max: 0, avg: 0 };
-    }
-
-    return {
-      min,
-      max,
-      avg: Math.round(sum / matchedCount),
-    };
-  }, [filters]);
-
   return {
     filters,
     filterOptions,
     computedMetrics,
     updateFilter,
-    toggleAllFilter, // Exposing it here cleans up compile bugs inside Analytics.tsx!
+    toggleAllFilter,
+    isLoading
   };
 }

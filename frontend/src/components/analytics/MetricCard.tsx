@@ -5,8 +5,8 @@ interface MetricCardProps {
 }
 
 export default function MetricCard({ label, value, accentColor }: MetricCardProps) {
-  // Prevent printing NaN or Infinity fields if calculations fluctuate
-  const cleanDisplayValue = typeof value === 'number' && isFinite(value) && value > 0 
+  // Enhanced to safely support accurate '0' returns while shielding NaN or Infinity values
+  const cleanDisplayValue = typeof value === 'number' && isFinite(value) && value >= 0 
     ? `$${value.toLocaleString()}` 
     : '$0';
 

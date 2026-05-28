@@ -9,7 +9,8 @@ interface EmployeeFormModalProps {
   // Strictly types the state setter using React's dispatch signature instead of "any"
   setFormData: React.Dispatch<React.SetStateAction<EmployeeFormFields>>;
   onClose: () => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  isLoading?: boolean;
 }
 
 export default function EmployeeFormModal({ 

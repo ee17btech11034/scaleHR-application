@@ -1,15 +1,17 @@
+import React from 'react';
 import { useCompensationAnalytics } from '../../hooks/useCompensationAnalytics';
 import FilterMatrix from './FilterMatrix';
 import MetricCard from './MetricCard';
 
 export default function AnalyticsPage() {
-  // Pull structured computational telemetry directly from the hook engine
+  // Pull structured computational telemetry and loading states directly from the hook engine
   const { 
     filters, 
     filterOptions, 
     computedMetrics, 
     updateFilter, 
-    toggleAllFilter 
+    toggleAllFilter,
+    isLoading // New: Tracks active backend analytics query states
   } = useCompensationAnalytics();
 
   // Extract counts for high-density overview summary reporting metrics context
@@ -33,8 +35,16 @@ export default function AnalyticsPage() {
         </div>
         
         {/* Metric Target Scale Badge indicator for HR managers */}
-        <div className="self-start md:self-auto bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono font-medium text-slate-500 shadow-sm">
-          Dataset Scale: 10,000 files
+        <div className="self-start md:self-auto flex items-center gap-3">
+          {isLoading && (
+            <div className="flex items-center gap-1.5 text-xs font-medium text-indigo-600">
+              <div className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+              <span>Re-indexing metrics...</span>
+            </div>
+          )}
+          <div className="bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono font-medium text-slate-500 shadow-sm">
+            Dataset Scale: 10,000 files
+          </div>
         </div>
       </div>
 
@@ -47,7 +57,7 @@ export default function AnalyticsPage() {
       />
 
       {/* Structured Output Dashboard Real-Time Metric Display Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <div className={`grid grid-cols-1 sm:grid-cols-3 gap-5 transition-opacity duration-200 ${isLoading ? 'opacity-60' : 'opacity-100'}`}>
         <MetricCard 
           label="Cohort Minimum Salary" 
           value={computedMetrics?.min || 0} 
@@ -71,7 +81,7 @@ export default function AnalyticsPage() {
           Compensation Equity Audit Context
         </h3>
         <p className="text-xs text-slate-500 leading-relaxed">
-          The metrics displayed above update automatically in linear execution time whenever selections toggle. Use this cross-section mapping tool to calculate pay parity arrays across global operations, identify outlier salary compressions, and evaluate market benchmark standards for specific groups.
+          The metrics displayed above update automatically in linear execution time via backend database queries whenever selections toggle. Use this cross-section mapping tool to calculate pay parity arrays across global operations, identify outlier salary compressions, and evaluate market benchmark standards for specific groups.
         </p>
       </div>
 
