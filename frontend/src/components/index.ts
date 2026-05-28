@@ -1,3 +1,8 @@
 export { default as Header } from './header/Header'
 export { default as Footer } from './footer/Footer'
 export { default as Home } from './home/Home'
+export {default as EmployeeCard } from './employees/EmployeeCard'
+export {default as EmployeeFormModal } from './employees/EmployeeFormModal'
+export {default as Employees } from './employees/Employees'
+export {default as EmployeeViewModal} from './employees/EmployeeViewModal'
+export {default as SearchBar} from './employees/SearchBar'
