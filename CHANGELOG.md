@@ -36,3 +36,22 @@ npm run seed
 # 3. Boot up the Express application layer
 npm run dev
 ```
+
+## Testing API:
+```bash
+# 1. Roster Chunk Retrieval: 
+GET http://localhost:5000/api/employees?page=1&limit=12
+# 2. Individual Worker Onboarding: 
+POST http://localhost:5000/api/employees
+# 3. Record Modifier Updates: 
+PUT http://localhost:5000/api/employees/EMP-10042
+# 4. Permanent File Deletion: 
+DELETE http://localhost:5000/api/employees/EMP-10042
+# 5. Real-time Analytics Queries: 
+POST http://localhost:5000/api/analytics
+ -H "Content-Type: application/json" 
+ -d '{ "country": ["US", "GB"], "department": ["Engineering", "Product"], "jobTitle": ["Software Engineer", "Senior Developer"], "employmentStatus": ["FT"]}'
+ 
+ and response is: 
+ #{ "success": true, "data": { "min": 45302, "max": 154054, "avg": 101475 }}
+```

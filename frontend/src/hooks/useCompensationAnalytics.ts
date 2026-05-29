@@ -10,7 +10,7 @@ export interface FilterOptions {
   employmentStatuses: { id: string; label: string }[];
 }
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'http://localhost:5000/api';
 
 export function useCompensationAnalytics() {
   const [filters, setFilters] = useState<FilterState>({
@@ -41,34 +41,39 @@ export function useCompensationAnalytics() {
   useEffect(() => {
     const controller = new AbortController();
 
-    setTimeout(async () => {
+    const fetchAnalyticsMetrics = async () => {
+      // Separate execution from the active layout render pass
+      await Promise.resolve();
       if (controller.signal.aborted) return;
+
       setIsLoading(true);
-      
       try {
         const response = await fetch(`${API_BASE_URL}/analytics`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          // ⚡ FIX 1: Map frontend array keys to the exact singular keys expected by the API
           body: JSON.stringify({
-            countries: filters.country,
-            jobTitles: filters.jobTitle,
-            departments: filters.department,
-            employmentStatuses: filters.employmentStatus,
+            country: filters.country,
+            department: filters.department,
+            jobTitle: filters.jobTitle,
+            employmentStatus: filters.employmentStatus,
           }),
           signal: controller.signal
         });
 
         if (!response.ok) throw new Error('Database metrics aggregation fault response received.');
         
-        const data = await response.json();
+        const resPayload = await response.json();
         
         if (controller.signal.aborted) return;
 
-        if (data && typeof data === 'object') {
+        // ⚡ FIX 2: Safely dive into the nested "data" wrapper from your server response
+        if (resPayload && resPayload.success && typeof resPayload.data === 'object') {
+          const metrics = resPayload.data;
           setComputedMetrics({
-            min: (data.min as number) || 0,
-            max: (data.max as number) || 0,
-            avg: (data.avg as number) || 0
+            min: (metrics.min as number) || 0,
+            max: (metrics.max as number) || 0,
+            avg: (metrics.avg as number) || 0
           });
         }
       } catch (error: unknown) {
@@ -80,7 +85,9 @@ export function useCompensationAnalytics() {
           setIsLoading(false);
         }
       }
-    }, 0);
+    };
+
+    fetchAnalyticsMetrics();
 
     return () => {
       controller.abort();

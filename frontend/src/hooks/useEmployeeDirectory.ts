@@ -4,7 +4,7 @@ import { operational_country_details } from '../data/countries';
 import { employmentStatusTypes, departmentTypes, jobTitletypes } from '../data/employementConstants';
 
 const ITEMS_PER_PAGE = 12;
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'http://localhost:5000/api';
 
 const getInitialFormState = (): EmployeeFormFields => ({
   firstName: '',
@@ -52,7 +52,11 @@ export function useEmployeeDirectory() {
 
         if (data && typeof data === 'object' && Array.isArray(data.data)) {
           setPaginatedEmployees(data.data as EmployeeRecord[]);
-          setTotalPages((data.totalPages as number) || 1);
+           if (data.pagination && typeof data.pagination === 'object') {
+              setTotalPages((data.pagination.totalPages as number) || 1);
+            } else {
+              setTotalPages(1);
+            }
         } else if (Array.isArray(data)) {
           setPaginatedEmployees(data as EmployeeRecord[]);
           setTotalPages(1);
