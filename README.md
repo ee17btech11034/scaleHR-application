@@ -29,7 +29,9 @@ cd backend
 npm install       # Or your language equivalent install command
 
 # Run the seeding engine (Performance optimized)
-npm run seed      
+npm run generate-names # to generate names
+npm run seed # generate db
+npm run dev
 ```
 
 ### 2. Frontend Initialization
@@ -58,3 +60,7 @@ npm run test  # Validates SQL aggregate queries and seed hashing logic
 * **Seeder Execution (Fresh Run):** ~1.8 Seconds (10,000 records processed inside a unified transaction block)
 * **Seeder Execution (Cached Run):** <5 Milliseconds (Safeguarded by SHA-256 validation)
 * **Analytics Aggregation Query Latency:** ~2 Milliseconds (Optimized using indexing)
+
+## Demo:
+- [video](https://1drv.ms/v/c/7cdada698e72fc3c/IQBpCiMHAhBJQrjMURfZ8gSzAdSkDTqqmD_6dIbC3dyGGzc?e=eYYEwU)
+- images: in folder "demo img files"
