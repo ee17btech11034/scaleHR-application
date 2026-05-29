@@ -62,5 +62,5 @@ npm run test  # Validates SQL aggregate queries and seed hashing logic
 * **Analytics Aggregation Query Latency:** ~2 Milliseconds (Optimized using indexing)
 
 ## Demo:
-- [video](https://1drv.ms/v/c/7cdada698e72fc3c/IQBpCiMHAhBJQrjMURfZ8gSzAdSkDTqqmD_6dIbC3dyGGzc?e=eYYEwU)
+- [video](https://1drv.ms/v/c/7cdada698e72fc3c/IQCSKn5_fBnqT7DY9ayowk45AWHZICCjAzRAd3GapU-nbT4?e=TXB0ZC)
 - images: in folder "demo img files"
